@@ -21,7 +21,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); 
+  // console.log(req.body);
   let key = generateRandomString();
   let value = req.body.longURL;
   urlDatabase[key] = value
@@ -29,14 +29,34 @@ app.post("/urls", (req, res) => {
   res.redirect('/urls');        
 });
 
+app.post("/urls/:id", (req, res) => {
+  longURL = req.body.longURL;
+  shortURL = req.params.id;
+  console.log(shortURL);
+  console.log(longURL);
+  urlDatabase[req.params.id] = longURL;
+  console.log(urlDatabase[req.params.id]);
+  res.redirect("/urls");
+})
+
+// app.post("/urls/:id", (req, res) => {
+//   const longURL = req.body.longURL;
+//   const shortURL = req.params.id;
+//   console.log("in edit", shortURL);
+//   console.log("in edit",longURL);
+//   urlDatabase[shortURL].longURL = req.body.longURL
+//   res.redirect("/urls");
+// });
+
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortULR = req.params.shortURL
+  const shortURL = req.params.shortURL
   console.log("req.params:", req.params);
-  delete urlDatabase[shortULR];
+  delete urlDatabase[shortURL];
   res.redirect("/urls")
 });
 
 app.get("/urls", (req, res) => {
+  // console.log("displaying URLS")
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
