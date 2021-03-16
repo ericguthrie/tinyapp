@@ -21,8 +21,12 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send(generateRandomString(6));         // Respond with 'Ok' (we will replace this)
+  console.log(req.body); 
+  let key = generateRandomString();
+  let value = req.body.longURL;
+  urlDatabase[key] = value
+  
+  res.redirect('/urls');         // Respond with 'Ok' (we will replace this)
 });
 
 app.get("/urls", (req, res) => {
@@ -34,6 +38,11 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = 'http://www.lighthouselabs.ca';
+  res.redirect(longURL);
 });
 
 // app.get("/urls", (req, res) => {
