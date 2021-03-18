@@ -2,13 +2,8 @@
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp
     </a>
-    <form method="POST" action="/login">    
-      <label><b>User Name     
-      </b>    
-      </label>    
-      <input type="text" name="username" id="Uname" placeholder="Username"/>            
-      <button type="submit" id="log">Login</button>    
-  </form> 
+    
+    
     <div class="login">    
     
   </div>    
@@ -19,8 +14,22 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <div> <%= username %> </div>
+        <div> <%= user %> </div>
       </div>
+      <% if(user){ %>
+        <form method="POST" action="/logout" >               
+          <button class="btn btn-success" type="submit" id="log">Logout</button>    
+      </form>
+      <% } else{ %> 
+        <form method="POST" action="/login" > 
+          <form method="POST" action="/register" >    
+          <label><b>     
+          </b>    
+          </label>               
+          <button class="btn btn-success"  id="log"><a href="/login">Login</a></button>      
+          <button class="btn btn-success"  id="log"><a href="/register">Register</a></button>   
+      </form>  
+     <% } %>  
     </div>
   </nav>
 </header>
