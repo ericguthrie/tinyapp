@@ -11,12 +11,12 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <% if(user){ %>
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <div> <%= user %> </div>
+        <div> <%= user.email %> </div>
       </div>
-      <% if(user){ %>
         <form method="POST" action="/logout" >               
           <button class="btn btn-success" type="submit" id="log">Logout</button>    
       </form>
