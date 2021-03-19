@@ -1,17 +1,19 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080;
+
 const bcrypt = require('bcrypt');
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-app.set("view engine", "ejs");
 const {
   response
 } = require("express");
+
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.use(cookieParser())
+app.use(cookieParser());
+app.set("view engine", "ejs");
 
 //Functions:
 
@@ -21,9 +23,11 @@ function generateRandomString(length = 6) {
 
 function emailLookup(email, password) {
   let user = null;
+  console.log("users?, pass? email?", users, password, email)
   for (let userid in users) {
-    if (users[userid].email === email && users[userid].password === password) {
+    if (users[userid].email === email && bcrypt.compareSync(password, users[userid].password)) {
       user = users[userid];
+      console.log("this working?", users[userid].password);
       break;
     }
   }
@@ -96,6 +100,7 @@ app.post("/login", (req, res) => {
     password
   } = req.body;
 
+  // bcrypt.compareSync(password, hashedPassword)
 
   if (email === '' || password === '') {
     return res.status(400).send("Hey BUDDAY! You forgot to input e-mail or password!")
@@ -130,23 +135,29 @@ app.get("/logout", (req, res) => {
 
 //Registration submit  handler
 app.post("/register", (req, res) => {
+
+
   const {
     email,
     password
   } = req.body;
+
+  //hashed password
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  console.log("hashed pword", hashedPassword);
 
   if (email === '' || password === '') {
     return res.status(400).send("Hey BUDDAY! You forgot to input e-mail or password!")
   }
 
 
-
   const id = generateRandomString();
   users[id] = {
     id,
     email,
-    password
+    password: hashedPassword
   }
+
 
   res.cookie("user_id", id);
   res.redirect("/urls");
@@ -162,18 +173,18 @@ app.get("/register", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
 
- 
+
 
   const shortURL = req.params.shortURL
   const user = req.cookies['user_id']
   console.log("is this broken?", shortURL, user)
   if (user) {
-   if(req.cookies['user_id'] === urlDatabase[shortURL].userID) {
-    delete urlDatabase[shortURL];
-    res.redirect('/urls');
-   } else {
-     res.status(403).send("You are not authourized to delete this")
-   }
+    if (req.cookies['user_id'] === urlDatabase[shortURL].userID) {
+      delete urlDatabase[shortURL];
+      res.redirect('/urls');
+    } else {
+      res.status(403).send("You are not authourized to delete this")
+    }
   } else if (!user) {
     res.redirect('/login');
   }
@@ -196,8 +207,10 @@ app.post("/urls", (req, res) => {
   let key = generateRandomString();
   let value = req.body.longURL;
 
-  urlDatabase[key] = { longURL: value,
-  userID:  req.cookies["user_id"]}
+  urlDatabase[key] = {
+    longURL: value,
+    userID: req.cookies["user_id"]
+  }
 
   console.log("is this broken?", urlDatabase)
   res.redirect('/urls');
