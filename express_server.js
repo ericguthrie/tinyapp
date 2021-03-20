@@ -1,6 +1,8 @@
+const helpers = require('./helpers');
+
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080;
+const PORT = 8080; 
 
 const bcrypt = require('bcrypt');
 const cookieParser = require("cookie-parser");
@@ -14,45 +16,6 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
-
-//Functions:
-
-function generateRandomString(length = 6) {
-  return Math.random().toString(16).substr(2, length);
-};
-
-function emailLookup(email, password) {
-  let user = null;
-  console.log("users?, pass? email?", users, password, email)
-  for (let userid in users) {
-    if (users[userid].email === email && bcrypt.compareSync(password, users[userid].password)) {
-      user = users[userid];
-      console.log("this working?", users[userid].password);
-      break;
-    }
-  }
-  return user
-}
-
-function idLookup(email) {
-  for (let key in users) {
-    if (users[key], email === email) {
-      return users[key].id
-    }
-  }
-};
-
-function urlsforUser(userID) {
-  const output = {};
-  for (shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === userID) {
-      output[shortURL] = {
-        longURL: urlDatabase[shortURL].longURL
-      }
-    }
-  }
-  return output;
-};
 
 //Data:
 
@@ -70,16 +33,7 @@ const urlDatabase = {
 //Users:
 
 const users = {
-  // "userRandomID": {
-  //   id: "userRandomID",
-  //   email: "user@example.com",
-  //   password: "1234"
-  // },
-  // "user2RandomID": {
-  //   id: "user2RandomID",
-  //   email: "user2@example.com",
-  //   password: "dishwasher-funk"
-  // }
+
 };
 
 
@@ -100,12 +54,10 @@ app.post("/login", (req, res) => {
     password
   } = req.body;
 
-  // bcrypt.compareSync(password, hashedPassword)
-
   if (email === '' || password === '') {
     return res.status(400).send("Hey BUDDAY! You forgot to input e-mail or password!")
   }
-  const user = emailLookup(email, password);
+  const user = helpers.emailLookup(email, password, users);
   console.log(user);
 
   if (user) {
@@ -113,10 +65,8 @@ app.post("/login", (req, res) => {
     res.redirect("/urls");
   } else {
     res.status(403).send("Please Login");
-    // return res.redirect('/login')
   }
 });
-
 
 // Logout Route
 
@@ -135,8 +85,6 @@ app.get("/logout", (req, res) => {
 
 //Registration submit  handler
 app.post("/register", (req, res) => {
-
-
   const {
     email,
     password
@@ -146,12 +94,13 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   console.log("hashed pword", hashedPassword);
 
+  // If no e-mail or password is entered in Register
   if (email === '' || password === '') {
     return res.status(400).send("Hey BUDDAY! You forgot to input e-mail or password!")
   }
 
-
-  const id = generateRandomString();
+  // If registered give user id random string and passowrd
+  const id = helpers.generateRandomString();
   users[id] = {
     id,
     email,
@@ -192,7 +141,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const filteredURLS = urlsforUser(req.cookies.user_id);
+  const filteredURLS = helpers.urlsforUser(req.cookies.user_id, urlDatabase);
   console.log("is this right?", req.cookies.user_id)
   const user = users[req.cookies.user_id];
   const templateVars = {
@@ -204,7 +153,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let key = generateRandomString();
+  let key = helpers.generateRandomString();
   let value = req.body.longURL;
 
   urlDatabase[key] = {
