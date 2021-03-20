@@ -5,7 +5,7 @@ const app = express();
 const PORT = 8080; 
 
 const bcrypt = require('bcrypt');
-const cookieParser = require("cookie-parser");
+var cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
 const {
   response
@@ -14,7 +14,10 @@ const {
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}))
 app.set("view engine", "ejs");
 
 //Data:
@@ -42,7 +45,7 @@ const users = {
 // Login Page
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: req.cookies.user_id,
+    user: req.session.user_id,
   };
   res.render("login", templateVars);
 });
@@ -58,10 +61,11 @@ app.post("/login", (req, res) => {
     return res.status(400).send("Hey BUDDAY! You forgot to input e-mail or password!")
   }
   const user = helpers.emailLookup(email, password, users);
-  console.log(user);
+  console.log("ERIC IS THIS USER", user);
 
   if (user) {
-    res.cookie("user_id", user.id);
+    console.log("ERic is this user?", user)
+    req.session.user_id = user.id;
     res.redirect("/urls");
   } else {
     res.status(403).send("Please Login");
@@ -71,7 +75,7 @@ app.post("/login", (req, res) => {
 // Logout Route
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session.user_id = null;
   res.redirect("/urls")
 })
 
@@ -79,7 +83,7 @@ app.post("/logout", (req, res) => {
 
 //Registration page
 app.get("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session.user_id = null;
   res.redirect("/register")
 })
 
@@ -107,15 +111,15 @@ app.post("/register", (req, res) => {
     password: hashedPassword
   }
 
-
-  res.cookie("user_id", id);
+//
+req.session.user_id = id;
   res.redirect("/urls");
 });
 
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: req.cookies["user_id"]
+    user: req.session.user_id
   };
   res.render("register", templateVars) //use same name as file, no /(for res.render) unless redirecting(then / is needed)
 })
@@ -125,10 +129,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 
   const shortURL = req.params.shortURL
-  const user = req.cookies['user_id']
-  console.log("is this broken?", shortURL, user)
+  const user = req.session.user_id
+  console.log("is this broken?", shortURL, user, urlDatabase[shortURL])
   if (user) {
-    if (req.cookies['user_id'] === urlDatabase[shortURL].userID) {
+    if (req.session.user_id === urlDatabase[shortURL].userID) {
       delete urlDatabase[shortURL];
       res.redirect('/urls');
     } else {
@@ -141,9 +145,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const filteredURLS = helpers.urlsforUser(req.cookies.user_id, urlDatabase);
-  console.log("is this right?", req.cookies.user_id)
-  const user = users[req.cookies.user_id];
+  const filteredURLS = helpers.urlsforUser(req.session.user_id, urlDatabase);
+  console.log("is this right?", req.session.user_id)
+  const user = users[req.session.user_id];
   const templateVars = {
     user,
     urls: filteredURLS
@@ -158,7 +162,7 @@ app.post("/urls", (req, res) => {
 
   urlDatabase[key] = {
     longURL: value,
-    userID: req.cookies["user_id"]
+    userID: req.session["user_id"]
   }
 
   console.log("is this broken?", urlDatabase)
@@ -173,11 +177,11 @@ app.get("/urls/new", (req, res) => {
     id
   } = req.body;
   const templateVars = {
-    user: req.cookies["user_id"],
+    user: users[req.session.user_id],
   };
 
-  const user = req.cookies['user_id']
-
+  const user = req.session.user_id
+console.log("USER USER USER?", user)
   if (user) {
     res.render("urls_new", templateVars);
   } else if (!user) {
@@ -201,10 +205,10 @@ app.post("/urls/:id", (req, res) => {
   //   return res.redirect("/urls");
   // };
   const templateVars = {
-    user: req.cookies["user_id"],
+    user: req.session["user_id"],
   };
 
-  const user = req.cookies['user_id'];
+  const user = req.session.user_id
 
   if (user) {
     res.redirect("/urls");
@@ -219,7 +223,7 @@ app.post("/urls/:id", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    user: req.cookies["user_id"],
+    user: req.session["user_id"],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
@@ -240,23 +244,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-// for (let key in users) {
-//   if (users[key].email === email) {
-//     return res.status(400).send("Hey BUDDAY! This e-mail isn't allowed!")
-//   }
-//   else if(users[key].email === null) {
-//     return res.status(403).send("Hey BUDDAY! This e-mail cannot be found!")
-//   }
-//   else if(users[key].email && users[key].email === password) {
-//     res.cookie("user_id");
-//   } else {
-//     res.redirect("/urls");
-//   }
-// }
-
-// const id = generateRandomString();
-// users[id] = {
-//   id,
-//   email,
-//   password
-// }
